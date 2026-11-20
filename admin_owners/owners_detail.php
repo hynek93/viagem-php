@@ -1,6 +1,8 @@
 <?php
 
-$id = (integer)get_param('id');
+/** @var Database $db */
+
+$id = (int)get_param('id');
 
 if (isset($_GET['delete_note']))
 {
@@ -37,7 +39,7 @@ $owner = $db->queryOneResult("select o.*, m.name as municipality_name, m.code as
   left join municipalities m on m.id = o.municipality_id
   where o.id = " . $id);
 
-if (count($owner) == 0)
+if (!$owner)
 {
   $page_title = 'Vlastník nenalezen';
   ?>
@@ -47,7 +49,8 @@ if (count($owner) == 0)
   return;
 }
 
-$owner_name = $owner['type'] == 'P' ? $owner['last_name'] : $owner['first_name'] ? owner_name($owner) : $owner['last_name'];
+// PHP 8.0: nezazavorkovany vnoreny ternarni operator je fatal error
+$owner_name = $owner['type'] == 'P' ? $owner['last_name'] : ($owner['first_name'] ? owner_name($owner) : $owner['last_name']);
 $page_title = $owner_name;
 
 $parcels = owner_parcels($id);
@@ -72,7 +75,7 @@ if (count($parcels))
 
 <h1>
   <?php echo h($owner_name) ?>
-  <?php if ($owner['do_not_contact'] === '1') { ?><span class="badge badge_red">neoslovovat</span><?php } ?>
+  <?php if ($owner['do_not_contact'] == 1) { ?><span class="badge badge_red">neoslovovat</span><?php } ?>
 </h1>
 
 <?php echo flash_show() ?>

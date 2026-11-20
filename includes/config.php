@@ -2,14 +2,17 @@
 
 define('DEBUG', false);
 
-if (DEBUG) error_reporting(E_ALL);
-else error_reporting(E_ERROR | E_PARSE);
+define('ROOT', dirname(dirname(__FILE__)));
 
-ini_set('display_errors', 1);
+// Hlasime vse (vcetne deprecations pred PHP 9), ale jen do logu.
+// Uzivatelum se chyby zobrazuji pouze v DEBUG rezimu.
+error_reporting(E_ALL);
+ini_set('display_errors', DEBUG ? '1' : '0');
+ini_set('log_errors', '1');
+ini_set('error_log', ROOT . '/logs/php_error.log');
+
 date_default_timezone_set('Europe/Prague');
 setlocale(LC_ALL, 'cs_CZ.UTF-8', 'cs_CZ', 'czech');
-
-define('ROOT', dirname(dirname(__FILE__)));
 
 define('DB_HOST', getenv('DB_HOST') ? getenv('DB_HOST') : 'db');
 define('DB_NAME', 'legacy_crm');

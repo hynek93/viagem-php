@@ -1,5 +1,7 @@
 <?php
 
+/** @var Database $db */
+
 function municipalities_row($r, $section)
 {
   global $db;

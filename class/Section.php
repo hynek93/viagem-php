@@ -11,6 +11,23 @@ class Section
   public $sql_where = array();
   public $sql_join = array();
 
+  // deklarace kvuli PHP 8.2 (dynamicke vlastnosti jsou deprecated)
+  public $db;
+  public $item_name;
+  public $limit;
+  public $select_items;
+  public $row_function;
+  public $detail_url;
+  public $export_url;
+  public $search_value;
+  public $sort;
+  public $sort_dir;
+  public $default_sort;
+  public $default_sort_dir;
+  public $page;
+  public $total = 0;
+  public $pages = 0;
+
   function __construct($name = null)
   {
     global $db;
@@ -54,7 +71,7 @@ class Section
     $col['width'] = $width;
     $col['sort'] = $sort;
     $col['type'] = $type;
-    $col['sortable'] = (boolean)$sortable;
+    $col['sortable'] = (bool)$sortable;
 
     $this->cols[$sort] = $col;
   }
@@ -75,7 +92,7 @@ class Section
     $filter['type'] = $type;
     $filter['sql'] = $sql;
     $filter['options'] = $options;
-    $filter['value'] = trim(get_param('f_' . $id));
+    $filter['value'] = trim((string)get_param('f_' . $id, ''));
 
     $this->filters[$id] = $filter;
   }
@@ -94,7 +111,7 @@ class Section
   function setSearch($items, $value)
   {
     $this->search_items = $items;
-    $this->search_value = trim($value);
+    $this->search_value = trim((string)$value);
   }
 
   function setSortBy($sort, $dir = 'asc')
@@ -148,7 +165,7 @@ class Section
   function getOrder()
   {
     $sort = get_param('sort');
-    $dir = strtolower(get_param('dir')) == 'desc' ? 'desc' : 'asc';
+    $dir = strtolower((string)get_param('dir', '')) == 'desc' ? 'desc' : 'asc';
 
     if ($sort && isset($this->cols[$sort]) && $this->cols[$sort]['sortable'])
     {
@@ -336,7 +353,7 @@ class Section
       case 'datetime':
         return format_datetime($val);
       case 'int':
-        return number_format($val, 0, ',', ' ');
+        return number_format((float)$val, 0, ',', ' ');
       case 'area':
         return format_area($val);
       case 'link':

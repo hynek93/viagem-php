@@ -17,7 +17,7 @@ function parcels_row($r, $section)
   foreach ($owners as $o)
   {
     $links[] = '<a href="index.php?url=owners/detail&amp;id=' . $o['id'] . '">' . h(owner_name($o)) . '</a> <small>(' . format_share($o['share_num'], $o['share_den']) . ')</small>';
-    $lv[$o['lv_number']] = $o['lv_number'];
+    $lv[(string)$o['lv_number']] = $o['lv_number'];
   }
 
   $r['owners_html'] = count($links) ? implode('<br>', $links) : '<span class="muted">bez vlastníka</span>';

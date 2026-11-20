@@ -1,5 +1,7 @@
 <?php
 
+/** @var Database $db */
+
 $page_title = 'Přehled';
 
 $stats = array();
