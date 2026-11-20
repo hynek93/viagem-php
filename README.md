@@ -33,6 +33,12 @@ Report se uloží do `reports/`, logy aplikace jsou v `logs/`.
 
 Zastavení: `docker compose down`. Smazání včetně databáze: `docker compose down -v` (při dalším startu se data vygenerují znovu).
 
+Změny schématu jsou v `migrations/`. Na nové databázi se spustí automaticky při prvním startu. Na už existující databázi je spusťte ručně, opakované spuštění nevadí:
+
+```bash
+docker compose exec -T db mariadb -ucrm -pcrm legacy_crm < migrations/001_owners_list_indexes.sql
+```
+
 ## Struktura
 
 - `index.php` → `includes/config.php` → `includes/loader.php` (načte `includes/functions.php`, `class/Database.php`, `class/Section.php`, připojí DB)

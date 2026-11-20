@@ -12,6 +12,7 @@ services:
       MARIADB_PASSWORD: crm
     volumes:
       - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+      - ./migrations:/migrations:ro
       - dbdata:/var/lib/mysql
     ports:
       - "33061:3306"

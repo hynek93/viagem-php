@@ -18,6 +18,7 @@ if ($section->hasFilter('municipality'))
 $section->addCol('Termín oslovení', 10, 'duedate_html', 'html', false);
 $section->addCol('Založeno', 12, 'o.created_at', 'datetime');
 
+$section->setRowsPrepareFunction('owners_list_prepare');
 $section->setRowShowFunction('owners_list_row');
 
 ?>

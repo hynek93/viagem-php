@@ -17,6 +17,7 @@ class Section
   public $limit;
   public $select_items;
   public $row_function;
+  public $rows_function;
   public $detail_url;
   public $export_url;
   public $search_value;
@@ -38,6 +39,7 @@ class Section
     $this->limit = LIST_LIMIT;
     $this->select_items = array();
     $this->row_function = null;
+    $this->rows_function = null;
     $this->detail_url = '';
     $this->export_url = '';
     $this->search_value = '';
@@ -60,6 +62,7 @@ class Section
   function addJoin($sql) { $this->sql_join[] = $sql; }
   function addSQLWhereString($sql) { $this->sql_where[] = $sql; }
   function setRowShowFunction($fn) { $this->row_function = $fn; }
+  function setRowsPrepareFunction($fn) { $this->rows_function = $fn; }
 
   /*
   *   SLOUPCE
@@ -206,12 +209,19 @@ class Section
     $rows = array();
     while ($r = $res->fetch_assoc())
     {
-      if ($this->row_function)
-      {
-        $fn = $this->row_function;
-        $r = $fn($r, $this);
-      }
       $rows[] = $r;
+    }
+
+    if ($this->rows_function && count($rows))
+    {
+      $fn = $this->rows_function;
+      $rows = $fn($rows, $this);
+    }
+
+    if ($this->row_function)
+    {
+      $fn = $this->row_function;
+      foreach ($rows as $i => $r) $rows[$i] = $fn($r, $this);
     }
 
     return $rows;

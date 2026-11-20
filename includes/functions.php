@@ -182,10 +182,12 @@ function owner_parcel_count($owner_id)
 
 function owner_parcels_in_municipality($owner_id, $municipality)
 {
-  $result = array('cnt' => 0, 'area' => 0);
+  return parcels_in_municipality_stats(owner_parcels($owner_id), $municipality);
+}
 
-  $parcels = owner_parcels($owner_id);
-  if (!count($parcels)) return $result;
+function parcels_in_municipality_stats($parcels, $municipality)
+{
+  $result = array('cnt' => 0, 'area' => 0);
 
   foreach ($parcels as $p)
   {
