@@ -6,14 +6,14 @@ $id = (int)get_param('id');
 
 if (isset($_GET['delete_note']))
 {
-  $db->query("delete from owner_notes where id = " . $_GET['delete_note']);
+  $db->query("delete from owner_notes where id = " . intval(get_str('delete_note')));
   flash_set('Poznámka byla smazána.');
   redirect('index.php?url=owners/detail&id=' . $id . '#notes');
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && post_param('action') == 'add_note')
 {
-  $note = trim(post_param('note'));
+  $note = trim(post_str('note'));
 
   if ($note == '')
   {
@@ -63,7 +63,7 @@ if (count($parcels))
   foreach ($parcels as $p)
   {
     $total_area += $p['area_m2'];
-    $share_area += $p['area_m2'] * $p['share_num'] / $p['share_den'];
+    $share_area += share_area($p['area_m2'], $p['share_num'], $p['share_den']);
   }
 }
 
@@ -134,7 +134,7 @@ if (count($parcels))
         <td><?php echo h(mb_ucFirst($p['land_type'])) ?></td>
         <td class="right"><?php echo format_area($p['area_m2']) ?></td>
         <td class="right"><?php echo format_share($p['share_num'], $p['share_den']) ?></td>
-        <td class="right"><?php echo format_area(round($p['area_m2'] * $p['share_num'] / $p['share_den'])) ?></td>
+        <td class="right"><?php echo format_area(round(share_area($p['area_m2'], $p['share_num'], $p['share_den']))) ?></td>
       </tr>
 <?php } ?>
     </tbody>

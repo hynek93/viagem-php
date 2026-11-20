@@ -29,6 +29,22 @@ function post_param($name, $default = null)
   return $default;
 }
 
+// Textovy parametr z URL / formulare. Pole (napr. ?url[]=x) se povazuje za chybejici hodnotu:
+// v PHP 7.4 vedlo jen k warningu, od PHP 8.0 predani pole do trim() apod. konci TypeError (HTTP 500).
+function get_str($name, $default = '')
+{
+  $val = get_param($name, $default);
+  if (is_array($val)) return $default;
+  return $val === null ? null : (string)$val;
+}
+
+function post_str($name, $default = '')
+{
+  $val = post_param($name, $default);
+  if (is_array($val)) return $default;
+  return $val === null ? null : (string)$val;
+}
+
 function redirect($url)
 {
   header('Location: ' . $url);
@@ -103,6 +119,13 @@ function format_area($m2)
   return number_format($m2, 0, ',', ' ') . ' m²';
 }
 
+// Vymera odpovidajici podilu. Od PHP 8.0 je deleni nulou DivisionByZeroError (7.4 vratilo INF + warning).
+function share_area($area_m2, $num, $den)
+{
+  if (!$den) return 0;
+  return $area_m2 * $num / $den;
+}
+
 function format_share($num, $den)
 {
   if ($num == $den) return 'celý';
@@ -168,7 +191,7 @@ function owner_parcels_in_municipality($owner_id, $municipality)
   {
     if (mb_stripos((string)$p['municipality_name'], $municipality, 0, 'UTF-8') === false) continue;
     $result['cnt']++;
-    $result['area'] += $p['area_m2'] * $p['share_num'] / $p['share_den'];
+    $result['area'] += share_area($p['area_m2'], $p['share_num'], $p['share_den']);
   }
 
   return $result;

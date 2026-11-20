@@ -18,17 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 {
   $in = array();
   $in['id'] = $id;
-  $in['title'] = trim(post_param('title', ''));
-  $in['first_name'] = trim(post_param('first_name', ''));
-  $in['last_name'] = trim(post_param('last_name', ''));
-  $in['street'] = trim(post_param('street', ''));
-  $in['zip'] = str_replace(' ', '', post_param('zip', ''));
-  $in['city'] = trim(post_param('city', ''));
-  $in['phone'] = trim(post_param('phone', ''));
-  $in['email'] = trim(post_param('email', ''));
-  $in['duedate'] = post_param('duedate');
+  $in['title'] = trim(post_str('title'));
+  $in['first_name'] = trim(post_str('first_name'));
+  $in['last_name'] = trim(post_str('last_name'));
+  $in['street'] = trim(post_str('street'));
+  $in['zip'] = str_replace(' ', '', post_str('zip'));
+  $in['city'] = trim(post_str('city'));
+  $in['phone'] = trim(post_str('phone'));
+  $in['email'] = trim(post_str('email'));
+  $in['duedate'] = post_str('duedate', null);
   $in['do_not_contact'] = post_param('do_not_contact') ? '1' : '0';
-  $in['note'] = post_param('note');
+  $in['note'] = post_str('note', null);
 
   if ($in['last_name'] == '') $errors[] = $owner['type'] == 'P' ? 'Vyplňte název firmy.' : 'Vyplňte příjmení.';
   if ($in['email'] != '' && !filter_var($in['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail nemá platný formát.';

@@ -92,7 +92,7 @@ class Section
     $filter['type'] = $type;
     $filter['sql'] = $sql;
     $filter['options'] = $options;
-    $filter['value'] = trim((string)get_param('f_' . $id, ''));
+    $filter['value'] = trim(get_str('f_' . $id));
 
     $this->filters[$id] = $filter;
   }
@@ -164,8 +164,8 @@ class Section
 
   function getOrder()
   {
-    $sort = get_param('sort');
-    $dir = strtolower((string)get_param('dir', '')) == 'desc' ? 'desc' : 'asc';
+    $sort = get_str('sort');
+    $dir = strtolower(get_str('dir')) == 'desc' ? 'desc' : 'asc';
 
     if ($sort && isset($this->cols[$sort]) && $this->cols[$sort]['sortable'])
     {

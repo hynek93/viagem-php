@@ -22,7 +22,7 @@ function owners_build_section(?Section $section = null, $for_export = false)
     if ($for_export) $section->addSelect('m.name as municipality_name');
   }
 
-  $search = (string)get_param('search', '');
+  $search = get_str('search');
   $ico = regex_match('/^\s*(\d{8})\s*$/', $search, 1);
   if ($ico !== false)
   {

@@ -54,7 +54,7 @@ $section->addCol('Vlastníci', 25, 'owners_html', 'html', false);
 
 $section->addFilter('municipality', 'Obec', 'autocomplete', "m.name like '%{value}%'");
 $section->addFilter('land_type', 'Druh', 'select', "p.land_type = '{value}'", $land_types);
-$section->setSearch(array('p.parcel_number', 'p.cadastral_code'), get_param('search'));
+$section->setSearch(array('p.parcel_number', 'p.cadastral_code'), get_str('search'));
 
 $section->setSortBy('p.id', 'asc');
 $section->setRowShowFunction('parcels_row');
