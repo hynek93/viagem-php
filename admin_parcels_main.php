@@ -17,7 +17,7 @@ function parcels_row($r, $section)
   foreach ($owners as $o)
   {
     $links[] = '<a href="index.php?url=owners/detail&amp;id=' . $o['id'] . '">' . h(owner_name($o)) . '</a> <small>(' . format_share($o['share_num'], $o['share_den']) . ')</small>';
-    $lv[$o['lv_number']] = $o['lv_number'];
+    $lv[(string)$o['lv_number']] = $o['lv_number'];
   }
 
   $r['owners_html'] = count($links) ? implode('<br>', $links) : '<span class="muted">bez vlastníka</span>';
@@ -54,7 +54,7 @@ $section->addCol('Vlastníci', 25, 'owners_html', 'html', false);
 
 $section->addFilter('municipality', 'Obec', 'autocomplete', "m.name like '%{value}%'");
 $section->addFilter('land_type', 'Druh', 'select', "p.land_type = '{value}'", $land_types);
-$section->setSearch(array('p.parcel_number', 'p.cadastral_code'), get_param('search'));
+$section->setSearch(array('p.parcel_number', 'p.cadastral_code'), get_str('search'));
 
 $section->setSortBy('p.id', 'asc');
 $section->setRowShowFunction('parcels_row');

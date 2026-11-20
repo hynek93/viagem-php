@@ -1,5 +1,7 @@
 <?php
 
+/** @var Database $db */
+
 // 15 2 * * * www-data php /var/www/html/cron/nightly_report.php > /dev/null 2>&1
 
 if (PHP_SAPI != 'cli')
@@ -20,7 +22,8 @@ function cron_log($msg)
 function remote_ping($url)
 {
   $ch = curl_init();
-  if (!is_resource($ch))
+  // PHP 8.0: curl_init() vraci objekt CurlHandle, ne resource -> is_resource() by vzdy selhalo
+  if ($ch === false)
   {
     return array('ok' => false, 'msg' => 'curl není k dispozici');
   }
@@ -33,7 +36,8 @@ function remote_ping($url)
   $body = curl_exec($ch);
   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
   $error = curl_error($ch);
-  curl_close($ch);
+  // curl_close() je od 8.0 no-op a v 8.5 deprecated
+  if (PHP_VERSION_ID < 80000) curl_close($ch);
 
   if ($body === false) return array('ok' => false, 'msg' => $error);
   if ($code != 200) return array('ok' => false, 'msg' => 'HTTP ' . $code);
@@ -52,19 +56,20 @@ function upload_report($url, $file)
 
   $res = curl_exec($ch);
   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  curl_close($ch);
+  if (PHP_VERSION_ID < 80000) curl_close($ch);
 
   return $res !== false && $code == 200;
 }
 
 $time_start = microtime(true);
 $run_date = date('Y-m-d');
-$hostname = trim(`hostname`);
+// backtick operator je v PHP 8.5 deprecated
+$hostname = gethostname();
 
 cron_log('Start, server ' . $hostname);
 
 $stats = array();
-$stats['owners_total'] = (integer)$db->queryValue("select count(*) from owners");
+$stats['owners_total'] = (int)$db->queryValue("select count(*) from owners");
 $stats['owners_f'] = 0;
 $stats['owners_p'] = 0;
 $stats['owners_other'] = 0;
@@ -74,25 +79,25 @@ while ($r = $res->fetch_assoc())
 {
   switch ($r['type'])
   {
-    case 'F';
-      $stats['owners_f'] = (integer)$r['cnt'];
+    case 'F':
+      $stats['owners_f'] = (int)$r['cnt'];
       break;
-    case 'P';
-      $stats['owners_p'] = (integer)$r['cnt'];
+    case 'P':
+      $stats['owners_p'] = (int)$r['cnt'];
       break;
-    default;
-      $stats['owners_other'] += (integer)$r['cnt'];
+    default:
+      $stats['owners_other'] += (int)$r['cnt'];
   }
 }
 
-$stats['parcels_total'] = (integer)$db->queryValue("select count(*) from parcels");
-$stats['parcels_area'] = (integer)$db->queryValue("select sum(area_m2) from parcels");
-$stats['ownerships_total'] = (integer)$db->queryValue("select count(*) from ownerships");
-$stats['notes_total'] = (integer)$db->queryValue("select count(*) from owner_notes");
-$stats['notes_24h'] = (integer)$db->queryValue("select count(*) from owner_notes where created_at >= now() - interval 1 day");
-$stats['do_not_contact'] = (integer)$db->queryValue("select count(*) from owners where do_not_contact = 1");
-$stats['duedate_empty'] = (integer)$db->queryValue("select count(*) from owners where duedate = '0000-00-00'");
-$stats['duedate_overdue'] = (integer)$db->queryValue("select count(*) from owners where duedate <> '0000-00-00' and duedate < curdate()");
+$stats['parcels_total'] = (int)$db->queryValue("select count(*) from parcels");
+$stats['parcels_area'] = (int)$db->queryValue("select sum(area_m2) from parcels");
+$stats['ownerships_total'] = (int)$db->queryValue("select count(*) from ownerships");
+$stats['notes_total'] = (int)$db->queryValue("select count(*) from owner_notes");
+$stats['notes_24h'] = (int)$db->queryValue("select count(*) from owner_notes where created_at >= now() - interval 1 day");
+$stats['do_not_contact'] = (int)$db->queryValue("select count(*) from owners where do_not_contact = 1");
+$stats['duedate_empty'] = (int)$db->queryValue("select count(*) from owners where duedate = '0000-00-00'");
+$stats['duedate_overdue'] = (int)$db->queryValue("select count(*) from owners where duedate <> '0000-00-00' and duedate < curdate()");
 
 $top = $db->queryResult("select municipality_id, count(*) as cnt from owners group by municipality_id order by cnt desc, municipality_id limit 10");
 $land_types = $db->queryResult("select land_type, count(*) as cnt, sum(area_m2) as area from parcels group by land_type order by area desc");
@@ -155,7 +160,7 @@ $ping = remote_ping(REPORT_PING_URL . '?date=' . $run_date . '&host=' . urlencod
 if ($ping['ok']) cron_log('Reportovací služba: OK (' . $ping['msg'] . ')');
 else cron_log('Reportovací služba nedostupná: ' . $ping['msg']);
 
-$uploaded = (boolean)upload_report(REPORT_UPLOAD_URL, $report_file);
+$uploaded = (bool)upload_report(REPORT_UPLOAD_URL, $report_file);
 if ($uploaded) cron_log('Report odeslán.');
 else cron_log('Report se nepodařilo odeslat, zůstává jen lokálně.');
 

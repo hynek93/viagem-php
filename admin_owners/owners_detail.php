@@ -1,17 +1,19 @@
 <?php
 
-$id = (integer)get_param('id');
+/** @var Database $db */
+
+$id = (int)get_param('id');
 
 if (isset($_GET['delete_note']))
 {
-  $db->query("delete from owner_notes where id = " . $_GET['delete_note']);
+  $db->query("delete from owner_notes where id = " . intval(get_str('delete_note')));
   flash_set('Poznámka byla smazána.');
   redirect('index.php?url=owners/detail&id=' . $id . '#notes');
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && post_param('action') == 'add_note')
 {
-  $note = trim(post_param('note'));
+  $note = trim(post_str('note'));
 
   if ($note == '')
   {
@@ -37,7 +39,7 @@ $owner = $db->queryOneResult("select o.*, m.name as municipality_name, m.code as
   left join municipalities m on m.id = o.municipality_id
   where o.id = " . $id);
 
-if (count($owner) == 0)
+if (!$owner)
 {
   $page_title = 'Vlastník nenalezen';
   ?>
@@ -47,7 +49,8 @@ if (count($owner) == 0)
   return;
 }
 
-$owner_name = $owner['type'] == 'P' ? $owner['last_name'] : $owner['first_name'] ? owner_name($owner) : $owner['last_name'];
+// PHP 8.0: nezazavorkovany vnoreny ternarni operator je fatal error
+$owner_name = $owner['type'] == 'P' ? $owner['last_name'] : ($owner['first_name'] ? owner_name($owner) : $owner['last_name']);
 $page_title = $owner_name;
 
 $parcels = owner_parcels($id);
@@ -60,7 +63,7 @@ if (count($parcels))
   foreach ($parcels as $p)
   {
     $total_area += $p['area_m2'];
-    $share_area += $p['area_m2'] * $p['share_num'] / $p['share_den'];
+    $share_area += share_area($p['area_m2'], $p['share_num'], $p['share_den']);
   }
 }
 
@@ -72,7 +75,7 @@ if (count($parcels))
 
 <h1>
   <?php echo h($owner_name) ?>
-  <?php if ($owner['do_not_contact'] === '1') { ?><span class="badge badge_red">neoslovovat</span><?php } ?>
+  <?php if ($owner['do_not_contact'] == 1) { ?><span class="badge badge_red">neoslovovat</span><?php } ?>
 </h1>
 
 <?php echo flash_show() ?>
@@ -131,7 +134,7 @@ if (count($parcels))
         <td><?php echo h(mb_ucFirst($p['land_type'])) ?></td>
         <td class="right"><?php echo format_area($p['area_m2']) ?></td>
         <td class="right"><?php echo format_share($p['share_num'], $p['share_den']) ?></td>
-        <td class="right"><?php echo format_area(round($p['area_m2'] * $p['share_num'] / $p['share_den'])) ?></td>
+        <td class="right"><?php echo format_area(round(share_area($p['area_m2'], $p['share_num'], $p['share_den']))) ?></td>
       </tr>
 <?php } ?>
     </tbody>

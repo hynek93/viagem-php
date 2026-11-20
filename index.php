@@ -4,7 +4,7 @@ $time_start = microtime(true);
 
 require_once dirname(__FILE__) . '/includes/config.php';
 
-$url = trim(get_param('url', ''), '/');
+$url = trim(get_str('url'), '/');
 $url_parts = $url != '' ? explode('/', $url) : array();
 
 define('URL1', isset($url_parts[0]) ? $url_parts[0] : 'dashboard');

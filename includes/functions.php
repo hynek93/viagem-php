@@ -8,14 +8,13 @@ function db_escape($val)
     return $val;
   }
 
-  if (get_magic_quotes_gpc()) $val = stripslashes($val);
-
-  return addslashes($val);
+  // get_magic_quotes_gpc() bylo odstraneno v PHP 8.0 (od 5.4 vracelo vzdy false)
+  return addslashes((string)$val);
 }
 
 function h($s)
 {
-  return @htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+  return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
 }
 
 function get_param($name, $default = null)
@@ -28,6 +27,22 @@ function post_param($name, $default = null)
 {
   if (isset($_POST[$name])) return $_POST[$name];
   return $default;
+}
+
+// Textovy parametr z URL / formulare. Pole (napr. ?url[]=x) se povazuje za chybejici hodnotu:
+// v PHP 7.4 vedlo jen k warningu, od PHP 8.0 predani pole do trim() apod. konci TypeError (HTTP 500).
+function get_str($name, $default = '')
+{
+  $val = get_param($name, $default);
+  if (is_array($val)) return $default;
+  return $val === null ? null : (string)$val;
+}
+
+function post_str($name, $default = '')
+{
+  $val = post_param($name, $default);
+  if (is_array($val)) return $default;
+  return $val === null ? null : (string)$val;
 }
 
 function redirect($url)
@@ -48,43 +63,67 @@ function url($params = array(), $keep_current = false)
   return 'index.php?' . h(http_build_query($query));
 }
 
-function match($pattern, $subject, $group = 0)
+// puvodne match(), od PHP 8.0 je "match" rezervovane slovo
+function regex_match($pattern, $subject, $group = 0)
 {
-  if (!preg_match($pattern, $subject, $m)) return false;
+  if (!preg_match($pattern, (string)$subject, $m)) return false;
   return isset($m[$group]) ? $m[$group] : false;
 }
 
-function mb_ucFirst($s)
+// PHP 8.4 ma mb_ucfirst()/mb_lcfirst() nativne (jmena funkci nerozlisuji velikost pismen),
+// vlastni implementace proto slouzi jen jako polyfill pro starsi PHP.
+if (!function_exists('mb_ucfirst'))
 {
-  return mb_strtoupper(mb_substr($s, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($s, 1, null, 'UTF-8');
+  function mb_ucFirst($s)
+  {
+    return mb_strtoupper(mb_substr($s, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($s, 1, null, 'UTF-8');
+  }
 }
 
-function mb_lcFirst($s)
+if (!function_exists('mb_lcfirst'))
 {
-  return mb_strtolower(mb_substr($s, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($s, 1, null, 'UTF-8');
+  function mb_lcFirst($s)
+  {
+    return mb_strtolower(mb_substr($s, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($s, 1, null, 'UTF-8');
+  }
 }
 
 function is_ico($s)
 {
-  return match('/^\d{8}$/', trim($s)) !== false;
+  return regex_match('/^\d{8}$/', trim((string)$s)) !== false;
+}
+
+// Prazdne datum z DB ('0000-00-00'). Nahrazuje puvodni test `$date == 0`,
+// ktery od PHP 8.0 kvuli zmene porovnani retezec/cislo prestal fungovat.
+function is_empty_date($date)
+{
+  return !$date || $date === '0000-00-00' || $date === '0000-00-00 00:00:00';
 }
 
 function format_date($date, $empty = '–')
 {
-  if (!$date || $date == '0000-00-00' || $date == '0000-00-00 00:00:00') return $empty;
+  if (is_empty_date($date)) return $empty;
   return date('j. n. Y', strtotime($date));
 }
 
 function format_datetime($date, $empty = '–')
 {
-  if (!$date || $date == '0000-00-00 00:00:00') return $empty;
+  if (is_empty_date($date)) return $empty;
   return date('j. n. Y H:i', strtotime($date));
 }
 
 function format_area($m2)
 {
+  $m2 = (float)$m2;
   if ($m2 >= 10000) return number_format($m2 / 10000, 2, ',', ' ') . ' ha';
   return number_format($m2, 0, ',', ' ') . ' m²';
+}
+
+// Vymera odpovidajici podilu. Od PHP 8.0 je deleni nulou DivisionByZeroError (7.4 vratilo INF + warning).
+function share_area($area_m2, $num, $den)
+{
+  if (!$den) return 0;
+  return $area_m2 * $num / $den;
 }
 
 function format_share($num, $den)
@@ -95,6 +134,7 @@ function format_share($num, $den)
 
 function trim_text($s, $length = 80)
 {
+  $s = (string)$s;
   if (strlen($s) <= $length) return $s;
   return mb_substr($s, 0, $length, 'UTF-8') . '…';
 }
@@ -103,13 +143,13 @@ function owner_type_label($type, $lower = false)
 {
   switch ($type)
   {
-    case 'F';
+    case 'F':
       $label = 'Fyzická osoba';
       break;
-    case 'P';
+    case 'P':
       $label = 'Právnická osoba';
       break;
-    default;
+    default:
       $label = 'Neurčeno';
   }
 
@@ -149,9 +189,9 @@ function owner_parcels_in_municipality($owner_id, $municipality)
 
   foreach ($parcels as $p)
   {
-    if (mb_stripos($p['municipality_name'], $municipality, 0, 'UTF-8') === false) continue;
+    if (mb_stripos((string)$p['municipality_name'], $municipality, 0, 'UTF-8') === false) continue;
     $result['cnt']++;
-    $result['area'] += $p['area_m2'] * $p['share_num'] / $p['share_den'];
+    $result['area'] += share_area($p['area_m2'], $p['share_num'], $p['share_den']);
   }
 
   return $result;
@@ -161,7 +201,8 @@ function owner_parcels($owner_id)
 {
   global $db;
 
-  $list = null;
+  // puvodne null -> count(null) je od PHP 8.0 TypeError
+  $list = array();
 
   $res = $db->query("select os.id as ownership_id, os.share_num, os.share_den, os.lv_number,
       p.id, p.cadastral_area, p.cadastral_code, p.parcel_number, p.area_m2, p.land_type,

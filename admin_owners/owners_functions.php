@@ -1,6 +1,6 @@
 <?php
 
-function owners_build_section(Section $section = null, $for_export = false)
+function owners_build_section(?Section $section = null, $for_export = false)
 {
   if (!$section) $section = new Section('owners');
 
@@ -22,8 +22,8 @@ function owners_build_section(Section $section = null, $for_export = false)
     if ($for_export) $section->addSelect('m.name as municipality_name');
   }
 
-  $search = get_param('search');
-  $ico = match('/^\s*(\d{8})\s*$/', $search, 1);
+  $search = get_str('search');
+  $ico = regex_match('/^\s*(\d{8})\s*$/', $search, 1);
   if ($ico !== false)
   {
     $section->addSQLWhereString("o.ico = '" . $ico . "'");
@@ -39,8 +39,8 @@ function owners_build_section(Section $section = null, $for_export = false)
 function owners_list_row($r, $section)
 {
   $html = '<a href="index.php?url=owners/detail&amp;id=' . $r['id'] . '">' . h(owner_name($r)) . '</a>';
-  if ($r['do_not_contact'] === '1') $html .= ' <span class="badge badge_red">neoslovovat</span>';
-  if (strlen($r['note'])) $html .= ' <span class="badge" title="' . h($r['note']) . '">pozn.</span>';
+  if ($r['do_not_contact'] == 1) $html .= ' <span class="badge badge_red">neoslovovat</span>';
+  if (strlen((string)$r['note'])) $html .= ' <span class="badge" title="' . h($r['note']) . '">pozn.</span>';
   $r['owner_html'] = $html;
 
   $r['type_label'] = owner_type_label($r['type']);
@@ -56,7 +56,7 @@ function owners_list_row($r, $section)
     else $r['in_municipality'] = '<span class="muted">–</span>';
   }
 
-  if ($r['duedate'] == 0)
+  if (is_empty_date($r['duedate']))
   {
     $r['duedate_html'] = '<span class="muted">nenastaven</span>';
   }

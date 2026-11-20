@@ -64,11 +64,11 @@ class Minify
         $quote = null;
 
         for ($i = 0; $i < $len; $i++) {
-            $c = $css{$i};
+            $c = $css[$i];
 
             if ($quote !== null) {
                 $out .= $c;
-                if ($c == $quote && $css{$i - 1} != '\\') {
+                if ($c == $quote && $css[$i - 1] != '\\') {
                     $quote = null;
                 }
                 continue;
@@ -81,12 +81,12 @@ class Minify
             }
 
             if (self::isSpace($c)) {
-                $last = strlen($out) ? $out{strlen($out) - 1} : '';
+                $last = strlen($out) ? $out[strlen($out) - 1] : '';
                 $j = $i + 1;
-                while ($j < $len && self::isSpace($css{$j})) {
+                while ($j < $len && self::isSpace($css[$j])) {
                     $j++;
                 }
-                $next = $j < $len ? $css{$j} : '';
+                $next = $j < $len ? $css[$j] : '';
                 $i = $j - 1;
 
                 if ($last === '' || $next === '') {
@@ -132,11 +132,11 @@ class Minify
                 continue;
             }
 
-            if ($line{0} == '/' && strlen($line) > 1) {
-                if ($line{1} == '/') {
+            if ($line[0] == '/' && strlen($line) > 1) {
+                if ($line[1] == '/') {
                     continue;
                 }
-                if ($line{1} == '*') {
+                if ($line[1] == '*') {
                     if (strpos($line, '*/', 2) === false) {
                         $inComment = true;
                     }
@@ -160,7 +160,7 @@ class Minify
         $len = strlen($s);
 
         for ($i = 0; $i < $len; $i++) {
-            if ($s{$i} == '/' && $i + 1 < $len && $s{$i + 1} == '*') {
+            if ($s[$i] == '/' && $i + 1 < $len && $s[$i + 1] == '*') {
                 $end = strpos($s, '*/', $i + 2);
                 if ($end === false) {
                     break;
@@ -168,7 +168,7 @@ class Minify
                 $i = $end + 1;
                 continue;
             }
-            $out .= $s{$i};
+            $out .= $s[$i];
         }
 
         return $out;

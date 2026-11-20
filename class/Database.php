@@ -2,6 +2,10 @@
 
 class QueryResult
 {
+  // deklarace kvuli PHP 8.2 (dynamicke vlastnosti jsou deprecated)
+  public $stmt;
+  public $num_rows;
+
   function __construct($stmt)
   {
     $this->stmt = $stmt;
@@ -29,15 +33,30 @@ class Database
   var $pdo;
   var $bind_params = array();
   var $query_count = 0;
+  var $connected = false;
+  var $sql;
+  var $last_id;
+  var $affected_rows;
+  var $last_error;
 
   function connect()
   {
     $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
 
+    // PHP 8.5: PDO::MYSQL_ATTR_* je deprecated, nahrada Pdo\Mysql::ATTR_* existuje az od 8.4.
+    // Kod musi bezet na 7.4 i 8.5 zaroven, proto vyber podle dostupnosti.
+    $init_command = defined('Pdo\Mysql::ATTR_INIT_COMMAND') ? constant('Pdo\Mysql::ATTR_INIT_COMMAND') : PDO::MYSQL_ATTR_INIT_COMMAND;
+
     $options = array(
-      PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_czech_ci, SESSION sql_mode = ''",
+      $init_command => "SET NAMES utf8mb4 COLLATE utf8mb4_czech_ci, SESSION sql_mode = ''",
       PDO::ATTR_EMULATE_PREPARES => true,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+      // PHP 8.0 zmenilo vychozi rezim na vyjimky. Aplikace chyby kontroluje navratovou
+      // hodnotou a loguje je, takze zachovavame puvodni chovani z 7.4.
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+      // PHP 8.1 vraci u emulovanych prepares int/float misto retezcu. CRM se spoleha na
+      // retezce (napr. `=== '1'`), proto drzime chovani z 7.4.
+      PDO::ATTR_STRINGIFY_FETCHES => true,
     );
 
     try
