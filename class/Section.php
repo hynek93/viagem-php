@@ -16,7 +16,9 @@ class Section
   public $item_name;
   public $limit;
   public $select_items;
+  /** @var callable|null funkce pro jeden radek: fn(array $row, Section $section): array */
   public $row_function;
+  /** @var callable|null funkce pro vsechny radky stranky: fn(array $rows, Section $section): array */
   public $rows_function;
   public $detail_url;
   public $export_url;
